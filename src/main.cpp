@@ -66,17 +66,17 @@ int main()
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    unsigned int vBuffer, vArray, iBuffer;
+    glGenVertexArrays(1, &vArray);
+    glGenBuffers(1, &vBuffer);
+    glGenBuffers(1, &iBuffer);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(vArray);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // position attribute
@@ -114,6 +114,9 @@ int main()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
+    glm::vec3 light = glm::vec3(1.f,5.f,1.f);
+    ourShader.use();
+    ourShader.SetVec3("lightPos", light);
     
     //主循环
     while (!glfwWindowShouldClose(window))
@@ -137,9 +140,10 @@ int main()
         // pass them to the shaders (3 different ways)
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera->GetViewMatrix()));
-        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        ourShader.SetVec3("viewPos", camera->GetCameraPos());
         ourShader.setMat4("projection", projection);
-        glBindVertexArray(VAO);
+        ourShader.SetMat3("normal", glm::inverse(glm::transpose(model)));
+        glBindVertexArray(vArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -155,6 +159,8 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera->CameraMovementEvent(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera->CameraMovementEvent(RIGHT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera->CameraMovementEvent(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) camera->CameraMovementEvent(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) camera->CameraMovementEvent(DOWN, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -172,10 +178,15 @@ void mouse_callback(GLFWwindow* window, double x, double y)
         lastY = ypos;
         enable2Rotate = false;
     }
-    float _x = xpos - lastX;
-    float _y = ypos - lastY;
-    lastX = xpos;
-    lastY = ypos;
+    float _x = 0;
+    float _y = 0;
+    if(glfwGetMouseButton(window, 0))
+    {
+        _x = xpos - lastX;
+        _y = ypos - lastY;
+        lastX = xpos;
+        lastY = ypos;
+    }
 
     camera->CameraRotateEvent(_x, _y);
 }

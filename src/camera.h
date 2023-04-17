@@ -8,7 +8,9 @@ enum CameraMovement
     FORWARD,
     BACKWARD,
     LEFT,
-    RIGHT
+    RIGHT,
+    UP,
+    DOWN
 };
 
 const float INTENSITY = 0.1f;
@@ -64,14 +66,21 @@ public:
         return glm::perspective(fov, asp, zNear,zFar);
     }
 
+    glm::vec3 GetCameraPos()
+    {
+        return cameraPos;
+    }
+
     //监听鼠标事件
     void CameraMovementEvent(CameraMovement dir, float deltaTime)
     {
         float speed = SPEED * deltaTime;
-        if(dir == FORWARD) cameraPos.z -= speed;
-        if(dir == BACKWARD) cameraPos.z += speed;
-        if(dir == LEFT) cameraPos.x -= speed;
-        if(dir == RIGHT) cameraPos.x += speed;
+        if(dir == FORWARD) cameraPos += forward * speed;
+        if(dir == BACKWARD) cameraPos -= forward * speed;
+        if(dir == LEFT) cameraPos -= right * speed;
+        if(dir == RIGHT) cameraPos += right * speed;
+        if(dir == UP) cameraPos += up * speed;
+        if(dir == DOWN) cameraPos -= up * speed;
     }
     void CameraRotateEvent(float x, float y)
     {
