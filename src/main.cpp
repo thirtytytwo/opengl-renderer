@@ -7,6 +7,8 @@
 #include <iostream>
 
 #include "camera.h"
+#include "GameObject.h"
+#include "Model.h"
 #include "shader.h"
 #include "stb_image.h"
 
@@ -47,7 +49,6 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -55,68 +56,10 @@ int main()
     }
     glEnable(GL_DEPTH_TEST);
     Shader ourShader("D:/opengl-renderer/assets/shader/testshader.vs", "D:/opengl-renderer/assets/shader/testshader.fs");
-    float vertices[] = {
-        // positions          // colors           // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
-    };
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    };
-    unsigned int vBuffer, vArray, iBuffer;
-    glGenVertexArrays(1, &vArray);
-    glGenBuffers(1, &vBuffer);
-    glGenBuffers(1, &iBuffer);
-
-    glBindVertexArray(vArray);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, iBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-
-    //添加图片
-    int width, height, channels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char * data = stbi_load("../assets/texture/container.jpg", &width, &height, &channels,0);
-    
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    //glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    if(data != NULL)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-    glm::vec3 light = glm::vec3(1.f,5.f,1.f);
+    Model _model("D:/opengl-renderer/assets/model/nanosuit.obj");
+    glm::vec4 light = glm::vec4(0.f,5.f,5.f,0.f);
     ourShader.use();
-    ourShader.SetVec3("lightPos", light);
+    ourShader.SetVec4("lightPos", light);
     
     //主循环
     while (!glfwWindowShouldClose(window))
@@ -127,12 +70,11 @@ int main()
         processInput(window);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        //glBindTexture(GL_TEXTURE_2D, texture);
         ourShader.use();
         // create transformations
         glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         glm::mat4 projection    = camera->GetProjectionMatrix();
-        glm::mat4 view = camera->GetViewMatrix();
         model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         // retrieve the matrix uniform locations
         unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
@@ -143,8 +85,7 @@ int main()
         ourShader.SetVec3("viewPos", camera->GetCameraPos());
         ourShader.setMat4("projection", projection);
         ourShader.SetMat3("normal", glm::inverse(glm::transpose(model)));
-        glBindVertexArray(vArray);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        _model.Draw(ourShader);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

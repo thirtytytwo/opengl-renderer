@@ -44,7 +44,7 @@ private:
     }
 
 public:
-    Camera(glm::vec3 pos = glm::vec3(0.f,0.f,3.0f), glm::vec3 up = glm::vec3(0,1,0),float fov = 45.f, float zNear = 0.1f, float zFar = 100.f, float asp = 1.0f): yaw(YAW), pitch(PITCH)
+    Camera(glm::vec3 pos = glm::vec3(0.f,0.f,5.0f), glm::vec3 up = glm::vec3(0,1,0),float fov = 45.f, float zNear = 0.1f, float zFar = 100.f, float asp = 1.0f): yaw(YAW), pitch(PITCH)
     {
         this->worldUp = up;
         this->cameraPos = pos;
